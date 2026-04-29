@@ -1,0 +1,22 @@
+[Unit]
+Description=A4 Scanner HTTP Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=video
+# Must be the repo root: the directory that directly contains `scanner_service/` and `scanner/`.
+WorkingDirectory=/opt/a4-flating
+# Match WorkingDirectory (helps if cwd is wrong; useless if the tree is nested — fix WorkingDirectory first).
+Environment=PYTHONPATH=/opt/a4-flating
+EnvironmentFile=/etc/default/a4-scanner
+ExecStart=/opt/a4-flating/.venv/bin/python -m scanner_service
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
