@@ -1,42 +1,31 @@
-# Automated Signature Monorepo
+# A4 Scanner service
 
-This repository now combines two related systems into one codebase:
+Captures and rectifies A4 documents from a camera or image file, with an optional HTTP service (`scanner_service`) for automation.
 
-- `A4 Scanner` (root project): captures and rectifies A4 documents from camera or image input.
-- `Plotter Signature` (`plotter-signature/`): printer automation service (Flask UI/API, FastAPI API, CLI, and desktop kiosk).
+**Repositories:** this codebase is [AhmedEllamie/Scanner](https://github.com/AhmedEllamie/Scanner). To work on **scanner and plotter** together, clone the meta repo with submodules: [AhmedEllamie/Automated_Signature](https://github.com/AhmedEllamie/Automated_Signature) (sibling folder `plotter-signature/` is [Plotter](https://github.com/AhmedEllamie/Plotter)).
 
-The goal is to run both components together as one workflow: scan a clean page, then route data to signature/printing automation.
-
-## Monorepo Structure
+## Repository structure
 
 ```text
 .
 |-- main.py                         # Scanner app entrypoint
 |-- scanner/                        # Scanner core modules
-|-- scanner_service/                # Async scanner HTTP service + bridge client
-|-- plotter-signature/              # Imported subtree (second repo)
-|   |-- plotter_signature/          # Plotter package
-|   |-- deploy/
-|   |-- docs/
-|   `-- README.md                   # Plotter-specific deep docs
-|-- requirements.txt                # Scanner dependencies
-|-- AUTOMATION_INTEGRATION.md
-|-- FLASK_SCANNER_HTTP_INTEGRATION.md
-|-- TECHNICAL_DOCUMENTATION.md
-`-- README.md                       # This file
+|-- scanner_service/                # HTTP service + bridge client
+|-- deploy/ubuntu/                  # systemd + env templates
+|-- requirements.txt
+|-- README.md                       # This file
+`-- ...
 ```
 
-## Components Overview
+## Components overview
 
-### 1) A4 Scanner (root)
-
-Main capabilities:
+### A4 Scanner
 
 - Auto-detect page corners and perspective-correct to A4 ratio.
 - Manual fallback (focus + 4-point corner selection).
-- Optional readability validation (fast mode or OCR mode with Tesseract).
+- Optional readability validation (fast mode or OCR with Tesseract).
 - Optional upload and API callback integration.
-- Optional standalone HTTP scanner service (`scanner_service`).
+- Standalone HTTP scanner service (`scanner_service`).
 
 Main entrypoints:
 
@@ -44,22 +33,9 @@ Main entrypoints:
 - `python run_scanner_service.py`
 - `python -m scanner_service`
 
-### 2) Plotter Signature (`plotter-signature/`)
+### Plotter Signature (separate repo)
 
-Main capabilities:
-
-- Printer automation services and domain logic.
-- Flask UI + REST API surface.
-- FastAPI printer endpoints.
-- CLI entrypoint and desktop pen kiosk.
-- Configurable via `appsettings.json` and environment variables.
-
-Main entrypoints:
-
-- `python -m plotter_signature --help`
-- `python -m plotter_signature serve-flask --host 0.0.0.0 --port 5001`
-- `python -m plotter_signature serve-api --host 0.0.0.0 --port 5000`
-- `python -m plotter_signature.desktop.pen_kiosk`
+Printer automation (Flask UI/API, FastAPI, CLI, kiosk) lives in **[Plotter](https://github.com/AhmedEllamie/Plotter)**. From a meta-repo checkout it appears as `plotter-signature/`. See that repository for install and `serve-flask` / `serve-api` commands.
 
 ## Prerequisites
 
@@ -76,16 +52,12 @@ winget install --id tesseract-ocr.tesseract --accept-source-agreements --accept-
 
 ## Setup
 
-You can use one shared virtual environment for the whole monorepo.
-
 ### Windows (PowerShell)
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-pip install -r .\plotter-signature\requirements.txt
-pip install -e .\plotter-signature
 ```
 
 ### Linux / macOS
@@ -94,13 +66,11 @@ pip install -e .\plotter-signature
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-pip install -r ./plotter-signature/requirements.txt
-pip install -e ./plotter-signature
 ```
 
-## How To Use
+## How to use
 
-## A) Run scanner only
+### A) Run scanner only
 
 Live camera mode:
 
@@ -135,7 +105,7 @@ Useful scanner keyboard shortcuts:
 - `r` reset manual points
 - `q` quit
 
-## B) Run scanner as HTTP service
+### B) Run scanner as HTTP service
 
 ```bash
 python run_scanner_service.py
@@ -147,7 +117,7 @@ or:
 python -m scanner_service
 ```
 
-Default: `127.0.0.1:8008`
+Default bind: `127.0.0.1:8008`
 
 Main endpoints:
 
@@ -158,37 +128,14 @@ Main endpoints:
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/image`
 
-## C) Run plotter signature services
-
-From repository root (after installing editable package):
-
-Flask UI + API:
-
-```bash
-python -m plotter_signature serve-flask --host 0.0.0.0 --port 5001
-```
-
-FastAPI printer API:
-
-```bash
-python -m plotter_signature serve-api --host 0.0.0.0 --port 5000
-```
-
-CLI help:
-
-```bash
-python -m plotter_signature --help
-```
-
-## D) Typical combined workflow
+### C) Typical combined workflow (with Plotter)
 
 1. Start scanner (`main.py` or `scanner_service`).
-2. Capture/rectify clean page image.
+2. Capture/rectify a clean page image.
 3. Validate readability (optional).
-4. Pass data/image to plotter workflow (Flask/FastAPI/CLI side).
-5. Execute printer/signature automation.
+4. Pass data/image to the Plotter workflow (see [Plotter](https://github.com/AhmedEllamie/Plotter)).
 
-For integration details between scanning and service flows, see:
+For integration details:
 
 - `AUTOMATION_INTEGRATION.md`
 - `FLASK_SCANNER_HTTP_INTEGRATION.md`
@@ -207,36 +154,17 @@ Scanner configuration:
   - `SCAN_CAPTURE_RESET_URL`
   - `SCAN_UNREADABLE_NOTIFY_URL`
 
-Plotter configuration:
+Plotter (separate repo): `appsettings.json`, `PLOTTER_API_KEY`, deploy templates under **Plotter** `deploy/ubuntu/`. Plotter APIs expect `X-API-Key`.
 
-- File: `plotter-signature/appsettings.json`
-- Package docs: `plotter-signature/README.md`
-- Deployment/env templates: `plotter-signature/deploy/ubuntu/`
-
-Authentication:
-
-- Plotter HTTP APIs expect shared header `X-API-Key`.
-- Set server key via `PLOTTER_API_KEY`.
-
-## Additional Documentation
-
-Scanner docs (root):
+## Additional documentation
 
 - `TECHNICAL_DOCUMENTATION.md`
 - `UBUNTU_RELEASE_GUIDE.md`
 - `AUTOMATION_INTEGRATION.md`
 - `FLASK_SCANNER_HTTP_INTEGRATION.md`
 
-Plotter docs:
-
-- `plotter-signature/README.md`
-- `plotter-signature/docs/api-pre-security/README.md`
-- `plotter-signature/docs/doxygen/README.md`
-
 ## Troubleshooting
 
 - If camera opens with low resolution, verify driver support and USB bandwidth.
 - If OCR readability fails, confirm Tesseract is installed and reachable.
-- If plotter APIs return auth errors, verify `PLOTTER_API_KEY` and `X-API-Key`.
-- If import errors appear for `plotter_signature`, run `pip install -e ./plotter-signature` again in the active environment.
-
+- If Plotter APIs return auth errors, verify `PLOTTER_API_KEY` and `X-API-Key` on the **Plotter** service.

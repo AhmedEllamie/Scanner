@@ -22,7 +22,10 @@ Choose one of these:
 
 ```bash
 cd /opt
-git clone <your-repo-url> a4-flating
+# Standalone scanner repo:
+git clone https://github.com/AhmedEllamie/Scanner.git a4-flating
+# Or: meta repo with submodules — use .../Automated_Signature/a4-flating after:
+# git clone --recurse-submodules https://github.com/AhmedEllamie/Automated_Signature.git
 ```
 
 ### Option B: You already copied repo to home (your case)
