@@ -1,3 +1,7 @@
+# A4 scanner HTTP (system service)
+# Install root (edit before copy, or run plotter-signature/deploy/ubuntu/configure-units.sh --scanner-only):
+#   Meta repo:  /opt/Automated_Signature/a4-flating
+#   Standalone:  /opt/a4-flating
 [Unit]
 Description=A4 Scanner HTTP Service
 After=network-online.target
@@ -5,14 +9,12 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=ubuntu
+User=diwan
 Group=video
-# Must be the repo root: the directory that directly contains `scanner_service/` and `scanner/`.
-WorkingDirectory=/opt/a4-flating
-# Match WorkingDirectory (helps if cwd is wrong; useless if the tree is nested — fix WorkingDirectory first).
-Environment=PYTHONPATH=/opt/a4-flating
+WorkingDirectory=/opt/Automated_Signature/a4-flating
+Environment=PYTHONPATH=/opt/Automated_Signature/a4-flating
 EnvironmentFile=/etc/default/a4-scanner
-ExecStart=/opt/a4-flating/.venv/bin/python -m scanner_service
+ExecStart=/opt/Automated_Signature/a4-flating/.venv/bin/python -m scanner_service
 Restart=always
 RestartSec=3
 TimeoutStopSec=15
