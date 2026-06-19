@@ -12,7 +12,12 @@ from .camera import apply_camera_settings, open_video_capture
 from .config import ScannerConfig
 from .geometry import edge_lengths, order_points
 from .readability import ReadabilityResult, verify_readability
-from .warp import a4_target_size, compute_warp_short_side, enhance_for_scan, warp_document
+from .warp import (
+    a4_target_size,
+    compute_warp_short_side,
+    process_rectified_image,
+    warp_document,
+)
 
 
 @dataclass
@@ -202,7 +207,7 @@ def capture_rectified_manual_png(
         warp_short = compute_warp_short_side(frame_w, frame_h, cfg)
         dst_size = a4_target_size(warp_short, cfg.a4_ratio)
         warped = warp_document(frame, quad, dst_size, cfg=cfg)
-        result = enhance_for_scan(warped, cfg=cfg) if cfg.apply_scan_enhancement else warped
+        result = process_rectified_image(warped, cfg)
 
         readability_result: ReadabilityResult | None = None
         require_readable = cfg.require_readable_to_save if readability_required is None else readability_required
@@ -302,7 +307,7 @@ def process_rectified_manual_frame(
         warp_short = compute_warp_short_side(frame_w, frame_h, cfg)
         dst_size = a4_target_size(warp_short, cfg.a4_ratio)
         warped = warp_document(work_frame, quad, dst_size, cfg=cfg)
-        result = enhance_for_scan(warped, cfg=cfg) if cfg.apply_scan_enhancement else warped
+        result = process_rectified_image(warped, cfg)
 
         readability_result: ReadabilityResult | None = None
         require_readable = cfg.require_readable_to_save if readability_required is None else readability_required

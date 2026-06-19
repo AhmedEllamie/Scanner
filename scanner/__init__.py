@@ -3,7 +3,14 @@ from .detect import detect_document_quad
 from .geometry import smooth_quad
 from .readability import verify_readability
 from .ui import ManualSelector
-from .warp import a4_target_size, compute_warp_short_side, enhance_for_scan, warp_document
+from .warp import (
+    a4_target_size,
+    compute_warp_short_side,
+    enhance_for_scan,
+    process_rectified_image,
+    remove_document_shadows,
+    warp_document,
+)
 from .api_client import check_capture_reset_api, notify_unreadable_capture, upload_scan, upload_scan_bytes
 from .camera import apply_camera_settings, open_video_capture
 from .capture import (
@@ -28,6 +35,8 @@ __all__ = [
     "a4_target_size",
     "compute_warp_short_side",
     "enhance_for_scan",
+    "process_rectified_image",
+    "remove_document_shadows",
     "warp_document",
     "open_video_capture",
     "apply_camera_settings",

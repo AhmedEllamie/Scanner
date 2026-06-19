@@ -95,13 +95,19 @@ class ScannerConfig:
     )
     # 0.0 = tighter crop with straighter lines, 1.0 = wider FOV with more edge distortion.
     fisheye_balance: float = 0.2
+    apply_shadow_removal: bool = True
+    # Morphological background kernel scales with rectified short side: short_side / divisor.
+    shadow_removal_kernel_divisor: int = 30
+    shadow_removal_kernel_min: int = 15
+    shadow_removal_kernel_max: int = 80
     apply_scan_enhancement: bool = True
     # Enhancement pipeline (gamma -> CLAHE in LAB -> saturation boost -> sharpening).
-    enhance_gamma: float = 1.08
-    enhance_clahe_clip_limit: float = 2.0
+    # Defaults tuned for OCR when apply_shadow_removal is True (mild gamma/CLAHE, no saturation boost).
+    enhance_gamma: float = 1.05
+    enhance_clahe_clip_limit: float = 1.5
     enhance_clahe_tile_size: int = 8
-    enhance_saturation_boost: float = 1.10
-    enhance_sharpen_strength: float = 0.55
+    enhance_saturation_boost: float = 1.0
+    enhance_sharpen_strength: float = 0.30
 
     # Optional readability verification (OCR based)
     enable_readability_check: bool = True

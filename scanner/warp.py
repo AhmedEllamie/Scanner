@@ -81,6 +81,44 @@ def warp_document(
     return warped
 
 
+def _shadow_kernel_size(image: np.ndarray, cfg: ScannerConfig) -> int:
+    height, width = image.shape[:2]
+    short_side = min(height, width)
+    divisor = max(1, int(getattr(cfg, "shadow_removal_kernel_divisor", 30)))
+    kernel_min = max(3, int(getattr(cfg, "shadow_removal_kernel_min", 15)))
+    kernel_max = max(kernel_min, int(getattr(cfg, "shadow_removal_kernel_max", 80)))
+    kernel = short_side // divisor
+    return max(kernel_min, min(kernel, kernel_max))
+
+
+def remove_document_shadows(warped: np.ndarray, cfg: ScannerConfig | None = None) -> np.ndarray:
+    """Flatten uneven illumination on a rectified page using morphological background estimation."""
+    if warped.size == 0:
+        return warped
+
+    kernel_size = _shadow_kernel_size(warped, cfg) if cfg is not None else 25
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+
+    lab = cv2.cvtColor(warped, cv2.COLOR_BGR2LAB)
+    l_chan, a_chan, b_chan = cv2.split(lab)
+
+    background = cv2.morphologyEx(l_chan, cv2.MORPH_CLOSE, kernel)
+    background = cv2.GaussianBlur(background, (0, 0), sigmaX=3, sigmaY=3)
+    background = np.maximum(background, 1)
+
+    l_norm = cv2.divide(l_chan, background, scale=255)
+    return cv2.cvtColor(cv2.merge((l_norm, a_chan, b_chan)), cv2.COLOR_LAB2BGR)
+
+
+def process_rectified_image(warped: np.ndarray, cfg: ScannerConfig) -> np.ndarray:
+    processed = warped
+    if cfg.apply_shadow_removal:
+        processed = remove_document_shadows(processed, cfg)
+    if cfg.apply_scan_enhancement:
+        processed = enhance_for_scan(processed, cfg)
+    return processed
+
+
 def _gamma_lut(gamma: float) -> np.ndarray:
     gamma = max(0.1, float(gamma))
     inv_gamma = 1.0 / gamma
@@ -93,11 +131,12 @@ def enhance_for_scan(warped: np.ndarray, cfg: ScannerConfig | None = None) -> np
     if warped.size == 0:
         return warped
 
-    gamma = max(0.1, float(getattr(cfg, "enhance_gamma", 1.08)))
-    clahe_clip = max(0.1, float(getattr(cfg, "enhance_clahe_clip_limit", 2.0)))
+    shadow_on = bool(cfg is not None and getattr(cfg, "apply_shadow_removal", False))
+    gamma = max(0.1, float(getattr(cfg, "enhance_gamma", 1.05 if shadow_on else 1.08)))
+    clahe_clip = max(0.1, float(getattr(cfg, "enhance_clahe_clip_limit", 1.5 if shadow_on else 2.0)))
     clahe_tile = max(2, int(getattr(cfg, "enhance_clahe_tile_size", 8)))
-    saturation_boost = max(0.0, float(getattr(cfg, "enhance_saturation_boost", 1.10)))
-    sharpen_strength = max(0.0, float(getattr(cfg, "enhance_sharpen_strength", 0.55)))
+    saturation_boost = max(0.0, float(getattr(cfg, "enhance_saturation_boost", 1.0 if shadow_on else 1.10)))
+    sharpen_strength = max(0.0, float(getattr(cfg, "enhance_sharpen_strength", 0.30 if shadow_on else 0.55)))
 
     gamma_corrected = cv2.LUT(warped, _gamma_lut(gamma))
 

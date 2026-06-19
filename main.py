@@ -18,9 +18,9 @@ from scanner import (
     compute_warp_short_side,
     detect_document_quad,
     encode_png_bytes,
-    enhance_for_scan,
     notify_unreadable_capture,
     open_video_capture,
+    process_rectified_image,
     smooth_quad,
     upload_scan,
     upload_scan_bytes,
@@ -189,7 +189,7 @@ def process_single_image(image_path: str, cfg: ScannerConfig, show_windows: bool
 
     draw_quad(vis, quad, (0, 255, 0))
     warped = warp_document(frame, quad, dst_size, cfg=cfg)
-    result = enhance_for_scan(warped, cfg=cfg) if cfg.apply_scan_enhancement else warped
+    result = process_rectified_image(warped, cfg)
 
     can_save, readability_result = can_save_by_readability(result, cfg)
     if not can_save:
@@ -504,7 +504,7 @@ def run_webcam(cfg: ScannerConfig) -> int:
             if active_quad is not None:
                 draw_quad(vis, active_quad, (0, 255, 255) if mode == "MANUAL" else (0, 255, 0))
                 warped = warp_document(frame, active_quad, dst_size, cfg=cfg)
-                warped_preview = enhance_for_scan(warped, cfg=cfg) if cfg.apply_scan_enhancement else warped
+                warped_preview = process_rectified_image(warped, cfg)
             else:
                 stable_frames = 0
 
